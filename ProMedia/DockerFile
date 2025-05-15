@@ -1,0 +1,21 @@
+# 1. Build stage
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Layihə faylını kopyala və bərpa et
+COPY ProMedia.csproj ./
+RUN dotnet restore ProMedia.csproj
+
+# Layihənin bütün qalan hissəsini kopyala və yığ
+COPY . ./
+RUN dotnet publish -c Release -o /app/publish
+
+# 2. Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+WORKDIR /app
+
+# Yığılmış tətbiqi konteynerə kopyala
+COPY --from=build /app/publish .
+
+# Tətbiqi işə sal
+ENTRYPOINT ["dotnet", "ProMedia.dll"]
