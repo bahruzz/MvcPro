@@ -1,21 +1,26 @@
-# 1. Build stage
+# ----- Build stage -----
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Layihə faylını kopyala və bərpa et
-COPY ProMedia.csproj ./
-RUN dotnet restore ProMedia.csproj
+# Copy solution and restore
+COPY ProMedia.sln .
+COPY ProMedia/ProMedia.csproj ProMedia/
+RUN dotnet restore ProMedia/ProMedia.csproj
 
-# Layihənin bütün qalan hissəsini kopyala və yığ
-COPY . ./
+# Copy the full source and build
+COPY ProMedia/ ProMedia/
+WORKDIR /src/ProMedia
 RUN dotnet publish -c Release -o /app/publish
 
-# 2. Runtime stage
+# ----- Runtime stage -----
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
-
-# Yığılmış tətbiqi konteynerə kopyala
 COPY --from=build /app/publish .
 
-# Tətbiqi işə sal
+# Expose port 80 (default for ASP.NET Core)
+EXPOSE 80
+
+# Set environment variable for ASP.NET
+ENV ASPNETCORE_URLS=http://+:80
+
 ENTRYPOINT ["dotnet", "ProMedia.dll"]
